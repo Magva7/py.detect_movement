@@ -29,15 +29,15 @@ while True:
     motion_mask = detector_movement.apply(frame)
 
     # Применение морфологических операций для улучшения результатов
-    motion_mask = cv2.morphologyEx(motion_mask, cv2.MORPH_OPEN, (8, 8))
-    motion_mask = cv2.morphologyEx(motion_mask, cv2.MORPH_CLOSE, (8, 8))
+    motion_mask = cv2.morphologyEx(motion_mask, cv2.MORPH_OPEN, (25, 25))
+    motion_mask = cv2.morphologyEx(motion_mask, cv2.MORPH_CLOSE, (28, 28))
 
     # Нахождение контуров движения
     contours, _ = cv2.findContours(motion_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     # Перебор контуров и отображение прямоугольников вокруг областей движения
     for contour in contours:
-        if cv2.contourArea(contour) > 30:  # Фильтрация небольших контуров
+        if cv2.contourArea(contour) > 200:  # Фильтрация небольших контуров
             (x, y, w, h) = cv2.boundingRect(contour)
             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
