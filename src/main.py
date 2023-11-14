@@ -1,8 +1,10 @@
-import cv2
+from detect_movement import setup_camera
+from detect_movement import setup_motion_detector
+from detect_movement import apply_motion_detector
+from detect_movement import display_frame_with_motion
+from detect_movement import release_resources
 
-from src.camera_setting import setup_camera
-from src.movement_detector import setup_motion_detector, apply_motion_detector
-from src.draws_rectangles import display_frame_with_motion, release_resources
+import cv2
 
 if __name__ == "__main__":
     cap = setup_camera()
