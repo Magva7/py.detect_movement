@@ -2,10 +2,12 @@ import cv2
 import os
 
 def setup_camera():
-    camera_turning = os.getenv("camera_turning")
-    camera_barrier_output = os.getenv("camera_barrier_output")
-    camera_barrier_input = os.getenv("camera_barrier_input")
+    # данные для доступа к камерам хранятся в переменных среды, см. readme
+    camera_turning = os.getenv("camera_turning")  # поворотная камера для тестов
+    camera_barrier_output = os.getenv("camera_barrier_output")  # камера на шлакбауме наружу
+    camera_barrier_input = os.getenv("camera_barrier_input")  # камера на шлакбауме внутрь двора
     
+    # rstp потоки от камер
     # rstp_url = camera_turning  # поворотная камера для тестов
     rstp_url = camera_barrier_output  # камера на шлакбауме наружу
     # rstp_url = camera_barrier_input  # камера на шлакбауме внутрь двора
@@ -24,7 +26,7 @@ def display_frame_with_motion(frame, contours):
             # рисуем прямоугольники вокруг областей движения на кадре
             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
-    # Отображаем получившийся кадр с контурами в окне с именем "Movement Detector".
+    # Отображаем получившийся кадр с контурами в окне с именем "Movement Detector" - потом закомментирую, т.к. работать будет на сервере через api
     cv2.imshow("Movement Detector", frame)
 
 def release_resources(cap):
@@ -33,7 +35,7 @@ def release_resources(cap):
     # освобождаем ресурсы
     cap.release()
 
-    # закрываем окна
+    # закрываем окна -  - потом закомментирую, т.к. работать будет на сервере через api
     cv2.destroyAllWindows()
 
 def setup_motion_detector():
