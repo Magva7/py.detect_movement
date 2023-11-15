@@ -1,5 +1,24 @@
 import cv2
 import os
+from telethon import TelegramClient, events, sync, connection
+
+# import threading
+# import asyncio
+
+# def send_telegram_notification(frame, contours):
+#     api_id = os.getenv("telegram_api_id_my_number")
+#     api_hash = os.getenv("telegram_api_hash_my_number")
+
+#     client = TelegramClient('session_name', api_id, api_hash)
+#     client.start()
+
+#     message = 'Test message'
+#     user_id = 6287756332  # id моей второй симки
+
+#     # client.send_message(user_id, message)
+#     client.send_message(user_id, "Обнаружено движение!")
+#     # client.send_file(user_id, 'path_to_your_image.jpg')
+
 
 def setup_camera():
     # данные для доступа к камерам хранятся в переменных среды, см. readme
@@ -9,8 +28,8 @@ def setup_camera():
     
     # rstp потоки от камер
     # rstp_url = camera_turning  # поворотная камера для тестов
-    rstp_url = camera_barrier_output  # камера на шлакбауме наружу
-    # rstp_url = camera_barrier_input  # камера на шлакбауме внутрь двора
+    # rstp_url = camera_barrier_output  # камера на шлакбауме наружу
+    rstp_url = camera_barrier_input  # камера на шлакбауме внутрь двора
     cap = cv2.VideoCapture(rstp_url)
     return cap
 
