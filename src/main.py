@@ -1,15 +1,7 @@
-from detect_movement import setup_camera
-from detect_movement import setup_motion_detector
-from detect_movement import apply_motion_detector
-from detect_movement import display_frame_with_motion
-from detect_movement import release_resources
-from detect_movement import send_telegram_notification
-from detect_movement import create_time_mask
-from detect_movement import apply_time_mask
-
 import cv2
 import time
-# import asyncio
+from detect_movement import setup_camera, setup_motion_detector, apply_motion_detector, display_frame_with_motion, release_resources, send_telegram_notification, create_time_mask, apply_time_mask
+import asyncio
 
 if __name__ == "__main__":
     cap = setup_camera()
@@ -40,7 +32,8 @@ if __name__ == "__main__":
             current_time = time.time()
             # Проверяем, прошло ли достаточно времени с момента последнего уведомления
             if current_time - last_notification_time >= 3:
-                send_telegram_notification(frame, contours)
+                # Отправляем уведомление в телеграм
+                # asyncio.run(send_telegram_notification(frame, contours))
                 last_notification_time = current_time  # обновляем время последнего уведомления
 
         key = cv2.waitKey(30)
