@@ -1,24 +1,45 @@
 import cv2
+import numpy as np
 import os
 from telethon import TelegramClient, events, sync, connection
+import asyncio
 
-# import threading
-# import asyncio
+# Мьютекс для синхронизации доступа к базе данных
+db_lock = asyncio.Lock()
 
-# def send_telegram_notification(frame, contours):
-#     api_id = os.getenv("telegram_api_id_my_number")
-#     api_hash = os.getenv("telegram_api_hash_my_number")
+async def send_telegram_notification(frame, contours):
+    async with db_lock:
+        api_id = os.getenv("telegram_api_id_my_number")
+        api_hash = os.getenv("telegram_api_hash_my_number")
 
-#     client = TelegramClient('session_name', api_id, api_hash)
-#     client.start()
+        async with TelegramClient('session_name', api_id, api_hash) as client:
+            message = 'Обнаружено движение'
+            user_id = 6287756332  # id моей второй симки
+            await client.send_message(user_id, message)
 
-#     message = 'Test message'
-#     user_id = 6287756332  # id моей второй симки
+# Создаем маску для игнорирования области с временем
+def create_time_mask(frame):
+    height, width, _ = frame.shape
+    
+    # Определите координаты и размеры области с временем в верхнем правом углу
+    time_area_x = width - 320  # примерные координаты X
+    time_area_y = 0  # примерные координаты Y
+    time_area_width = 320  # примерная ширина области
+    time_area_height = 80  # примерная высота области
+    
+    # Создаем черное изображение маски
+    mask = np.zeros((height, width), dtype=np.uint8)
+    
+    # Заполняем белым цветом область с временем
+    mask[time_area_y:time_area_y + time_area_height, time_area_x:time_area_x + time_area_width] = 255
+    
+    return mask, (time_area_x, time_area_y, time_area_width, time_area_height)
 
-#     # client.send_message(user_id, message)
-#     client.send_message(user_id, "Обнаружено движение!")
-#     # client.send_file(user_id, 'path_to_your_image.jpg')
-
+# Применяем маску перед обработкой детектором движения
+def apply_time_mask(frame, mask):
+    # Применяем маску кадра
+    masked_frame = cv2.bitwise_and(frame, frame, mask=~mask)
+    return masked_frame
 
 def setup_camera():
     # данные для доступа к камерам хранятся в переменных среды, см. readme
@@ -27,9 +48,9 @@ def setup_camera():
     camera_barrier_input = os.getenv("camera_barrier_input")  # камера на шлакбауме внутрь двора
     
     # rstp потоки от камер
-    # rstp_url = camera_turning  # поворотная камера для тестов
+    rstp_url = camera_turning  # поворотная камера для тестов
     # rstp_url = camera_barrier_output  # камера на шлакбауме наружу
-    rstp_url = camera_barrier_input  # камера на шлакбауме внутрь двора
+    # rstp_url = camera_barrier_input  # камера на шлакбауме внутрь двора
     cap = cv2.VideoCapture(rstp_url)
     return cap
 
