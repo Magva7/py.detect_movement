@@ -14,7 +14,7 @@ def setup_camera():
     cap = cv2.VideoCapture(rstp_url)
     return cap
 
-def display_frame_with_motion(frame, contours):
+def display_frame_with_motion(frame, contours, show_window=True):
     # на входе кадр из видеопотока и список контуров
     for contour in contours:
         # Фильтрация контуров по их площади - если уменьшить, то больше мелких объектов,
@@ -27,7 +27,8 @@ def display_frame_with_motion(frame, contours):
             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
     # Отображаем получившийся кадр с контурами в окне с именем "Movement Detector" - потом закомментирую, т.к. работать будет на сервере через api
-    cv2.imshow("Movement Detector", frame)
+    if show_window:
+        cv2.imshow("Movement Detector", frame)
 
 def release_resources(cap):
     # на вход подаем видеопоток cap
