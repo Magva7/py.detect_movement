@@ -3,7 +3,8 @@ import numpy as np
 import os
 from telethon import TelegramClient, events, sync, connection
 import asyncio
-from utils.config import api_id, api_hash  # получение айди и хэша нашего приложения из файла config.py
+from utils.config_telegram import api_id, api_hash  # получение айди и хэша нашего приложения из файла config.py
+from stream_setting import current_camera, minimum_contour_size, ball_size_for_remove_noises, ball_size_for_for_filling_holes
 
 # Мьютекс для синхронизации доступа к базе данных
 db_lock = asyncio.Lock()
@@ -58,23 +59,14 @@ def apply_time_mask(frame, mask):
     return masked_frame
 
 def setup_camera():
-    # данные для доступа к камерам хранятся в переменных среды, см. readme
-    camera_turning = os.getenv("camera_turning")  # поворотная камера для тестов
-    camera_barrier_output = os.getenv("camera_barrier_output")  # камера на шлакбауме наружу
-    camera_barrier_input = os.getenv("camera_barrier_input")  # камера на шлакбауме внутрь двора
-    
-    # rtsp потоки от камер
-    # rtsp_url = camera_turning  # поворотная камера для тестов
-    # rtsp_url = camera_barrier_output  # камера на шлакбауме наружу
-    rtsp_url = camera_barrier_input  # камера на шлакбауме внутрь двора
-    cap = cv2.VideoCapture(rtsp_url)
+    cap = cv2.VideoCapture(current_camera)
     return cap
 
 def display_frame_with_motion(frame, contours, show_window=True):
     # на входе кадр из видеопотока и список контуров
     for contour in contours:
         # Фильтрация контуров по их площади
-        if cv2.contourArea(contour) > 200:
+        if cv2.contourArea(contour) > minimum_contour_size:
             (x, y, w, h) = cv2.boundingRect(contour)
             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
@@ -93,8 +85,8 @@ def setup_motion_detector():
 
 def apply_motion_detector(detector, frame):
     motion_mask = detector.apply(frame)
-    motion_mask = cv2.morphologyEx(motion_mask, cv2.MORPH_OPEN, (25, 25))
-    motion_mask = cv2.morphologyEx(motion_mask, cv2.MORPH_CLOSE, (28, 28))
+    motion_mask = cv2.morphologyEx(motion_mask, cv2.MORPH_OPEN, (ball_size_for_remove_noises, ball_size_for_remove_noises))
+    motion_mask = cv2.morphologyEx(motion_mask, cv2.MORPH_CLOSE, (ball_size_for_for_filling_holes, ball_size_for_for_filling_holes))
 
     contours, _ = cv2.findContours(motion_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     return contours
