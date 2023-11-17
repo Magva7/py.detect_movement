@@ -9,3 +9,4 @@ src/__pycache__/
 # Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml
+session_name.session

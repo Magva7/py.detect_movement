@@ -1,7 +1,6 @@
 import cv2
 import time
-from detect_movement import setup_camera, setup_motion_detector, apply_motion_detector, display_frame_with_motion, release_resources, create_time_mask, apply_time_mask
-from utils.telegram_utils import send_telegram_notification
+from detect_movement import setup_camera, setup_motion_detector, apply_motion_detector, display_frame_with_motion, release_resources, create_time_mask, apply_time_mask, draw_contours
 import asyncio
 
 if __name__ == "__main__":
@@ -26,16 +25,18 @@ if __name__ == "__main__":
 
         # Применяем детектор движения к обработанному кадру
         contours = apply_motion_detector(detector_movement, masked_frame)
-        display_frame_with_motion(frame, contours)
 
-        # Если есть контуры, т.е. движение, то отправляем в телеграм
+        # Если есть контуры, т.е. движение, то рисуем контуры и отправляем в телеграм
         if contours:
             current_time = time.time()
             # Проверяем, прошло ли достаточно времени с момента последнего уведомления
             if current_time - last_notification_time >= 10:  # поставил 10 сек, пока тестирую, чтоб не спамило
                 # Отправляем уведомление в телеграм
-                asyncio.run(send_telegram_notification(frame, contours))
+                asyncio.run(draw_contours(frame, contours))
                 last_notification_time = current_time  # обновляем время последнего уведомления
+
+        # Отображаем получившийся кадр с контурами в окне
+        display_frame_with_motion(frame, contours)
 
         key = cv2.waitKey(30)
         if key == 27 or key == ord('q'):  # 27 - код клавиши Esc

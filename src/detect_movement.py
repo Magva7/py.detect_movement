@@ -1,35 +1,32 @@
 import cv2
 import numpy as np
 import os
-from telethon import TelegramClient, events, sync, connection
 import asyncio
-from utils.config import api_id, api_hash  # получение айди и хэша нашего приложения из файла config.py
+from stream_setting import current_camera, minimum_contour_size, ball_size_for_remove_noises, ball_size_for_for_filling_holes
+from utils.telegram_utils import send_telegram_notification
 
 # Мьютекс для синхронизации доступа к базе данных
 db_lock = asyncio.Lock()
 
-# функция для отправки оповещения в телеграм
-async def send_telegram_notification(frame, contours):
+async def draw_contours(frame, contours):
     async with db_lock:
-        async with TelegramClient('session_name', api_id, api_hash) as client:
-            # Отправляем сообщение
-            message = 'Обнаружено движение'
-            user_id = 6287756332  # id моей второй симки
-            await client.send_message(user_id, message)
+        # Отправляем сообщение
+        message = 'Обнаружено движение'
+        user_id = 6287756332  # id моей второй симки
 
-            # Рисуем контуры движения на кадре
-            frame_with_contours = frame.copy()
-            cv2.drawContours(frame_with_contours, contours, -1, (0, 255, 0), 2)
+        # Рисуем контуры движения на кадре
+        frame_with_contours = frame.copy()
+        cv2.drawContours(frame_with_contours, contours, -1, (0, 255, 0), 2)
 
-            # Сохраняем кадр с контурами во временный файл
-            temp_image_path = 'temp_image.jpg'
-            cv2.imwrite(temp_image_path, frame_with_contours)
+        # Сохраняем кадр с контурами во временный файл
+        temp_image_path = 'temp_image.jpg'
+        cv2.imwrite(temp_image_path, frame_with_contours)
 
-            # Отправляем изображение в телеграм
-            await client.send_file(user_id, temp_image_path)
+        # Отправляем уведомление в телеграм
+        await send_telegram_notification(message, temp_image_path, user_id)
 
-            # Удаляем временный файл
-            os.remove(temp_image_path)
+        # Удаляем временный файл
+        os.remove(temp_image_path)
 
 # Создаю маску для игнорирования области с временем, которая в углу
 def create_time_mask(frame):
@@ -58,23 +55,14 @@ def apply_time_mask(frame, mask):
     return masked_frame
 
 def setup_camera():
-    # данные для доступа к камерам хранятся в переменных среды, см. readme
-    camera_turning = os.getenv("camera_turning")  # поворотная камера для тестов
-    camera_barrier_output = os.getenv("camera_barrier_output")  # камера на шлакбауме наружу
-    camera_barrier_input = os.getenv("camera_barrier_input")  # камера на шлакбауме внутрь двора
-    
-    # rtsp потоки от камер
-    # rtsp_url = camera_turning  # поворотная камера для тестов
-    # rtsp_url = camera_barrier_output  # камера на шлакбауме наружу
-    rtsp_url = camera_barrier_input  # камера на шлакбауме внутрь двора
-    cap = cv2.VideoCapture(rtsp_url)
+    cap = cv2.VideoCapture(current_camera)
     return cap
 
 def display_frame_with_motion(frame, contours, show_window=True):
     # на входе кадр из видеопотока и список контуров
     for contour in contours:
         # Фильтрация контуров по их площади
-        if cv2.contourArea(contour) > 200:
+        if cv2.contourArea(contour) > minimum_contour_size:
             (x, y, w, h) = cv2.boundingRect(contour)
             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
@@ -93,8 +81,8 @@ def setup_motion_detector():
 
 def apply_motion_detector(detector, frame):
     motion_mask = detector.apply(frame)
-    motion_mask = cv2.morphologyEx(motion_mask, cv2.MORPH_OPEN, (25, 25))
-    motion_mask = cv2.morphologyEx(motion_mask, cv2.MORPH_CLOSE, (28, 28))
+    motion_mask = cv2.morphologyEx(motion_mask, cv2.MORPH_OPEN, (ball_size_for_remove_noises, ball_size_for_remove_noises))
+    motion_mask = cv2.morphologyEx(motion_mask, cv2.MORPH_CLOSE, (ball_size_for_for_filling_holes, ball_size_for_for_filling_holes))
 
     contours, _ = cv2.findContours(motion_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     return contours
