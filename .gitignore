@@ -1,6 +1,8 @@
 .vscode
 .idea
 src/__pycache__/
+src/temp_image.jpg
+src/utils/__pycache__/
 # Default ignored files
 /shelf/
 /workspace.xml
